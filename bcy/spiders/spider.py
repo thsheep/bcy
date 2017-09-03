@@ -40,7 +40,7 @@ class Bcy_Spider(Spider):
         # 进入cos作品集
         yield from [Request(works_url.format(user), callback=self.works_cos, dont_filter=True) for user in users]
         # 继续追踪关注
-        # yield from [Request(follow_url.format(user), callback=self.follow, dont_filter=True) for user in users]
+        yield from [Request(follow_url.format(user), callback=self.follow, dont_filter=True) for user in users]
 
     def works_cos(self, response):
         """获取cos作品
