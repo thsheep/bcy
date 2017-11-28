@@ -4,7 +4,7 @@
 #
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/spider-middleware.html
-import os , sys
+import base64
 import json
 from multiprocessing import Process
 from scrapy import signals
@@ -37,6 +37,19 @@ class BcyDownMiddleware(RetryMiddleware):
             return response
         return response
 
+
+class ProxyMiddleware(object):
+    '''随机选择代理'''
+
+    proxyServer = "http://proxy.abuyun.com:9020"
+    # 代理隧道验证信息
+    proxyUser = "H0LJ44DO4I9NG48D"
+    proxyPass = "03DDA970549AD599"
+    proxyAuth = "Basic " + base64.urlsafe_b64encode(bytes((proxyUser + ":" + proxyPass), "ascii")).decode("utf8")
+
+    def process_request(self, request, spider):
+        request.meta["proxy"] = self.proxyServer
+        request.headers["Proxy-Authorization"] = self.proxyAuth
 
 
 

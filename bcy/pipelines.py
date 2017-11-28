@@ -4,10 +4,82 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
+
+# adbapi 不用commit整个池子关闭后自动commit
+import re
+import six
+import pymysql
+from twisted.enterprise import adbapi
 from scrapy import Request
 from scrapy.pipelines.images import ImagesPipeline
 from scrapy.exceptions import DropItem
-import re
+from bcy.items import UItem, DetailItem
+
+
+class InfoPipeline(object):
+
+    def __init__(self, dbpool):
+        self.dbpool = dbpool
+
+    @classmethod
+    def form_settings(cls, settings):
+        dbparams = dict(
+            host=settings['MYSQL_HOST'],  # 读取settings中的配置
+            db=settings['MYSQL_DBNAME'],
+            user=settings['MYSQL_USER'],
+            passwd=settings['MYSQL_PASSWD'],
+            # cursorclass=pymysql.connect,
+            charset='utf8',
+            use_unicode=False,
+        )
+        dbpool = adbapi.ConnectionPool('pymysql', **dbparams)
+        return cls(dbpool=dbpool)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls.form_settings(crawler.settings)
+
+    def process_item(self, item, spider):
+        if isinstance(item, UItem):
+            table_name = item.pop('table_name')
+            col_str = ''
+            row_str = ''
+            for key in item.keys():
+                col_str = col_str + " " + key + ","
+                row_str = "{}'{}',".format(row_str,
+                                           item[key] if "'" not in item[key] else item[key].replace("'", "\\'"))
+                sql = "insert INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE ".format(table_name, col_str[1:-1],
+                                                                                        row_str[:-1])
+            for (key, value) in six.iteritems(item):
+                sql += "{} = '{}', ".format(key, value if "'" not in value else value.replace("'", "\\'"))
+            sql = sql[:-2]
+            self.dbpool_execute(sql).addCallback(self.printresult)
+            return item
+        if isinstance(item, DetailItem):
+            table_name = item.pop('table_name')
+            col_str = ''
+            row_str = ''
+            for key in item.keys():
+                col_str = col_str + " " + key + ","
+                row_str = "{}'{}',".format(row_str,
+                                           item[key] if "'" not in item[key] else item[key].replace("'", "\\'"))
+                sql = "insert INTO {} ({}) VALUES ({}) ON DUPLICATE KEY UPDATE ".format(table_name, col_str[1:-1],
+                                                                                        row_str[:-1])
+            for (key, value) in six.iteritems(item):
+                sql += "{} = '{}', ".format(key, value if "'" not in value else value.replace("'", "\\'"))
+            sql = sql[:-2]
+            self.dbpool_execute(sql).addCallback(self.printresult)
+            return item
+
+    def execute(self, txn, sql):
+        result = txn.execute(sql)
+        return result
+    def dbpool_execute(self, sql):
+        return self.dbpool.runInteraction(self.execute, sql)
+
+    def printresult(self, age):
+
+        pass
 
 
 class BcyPipeline(ImagesPipeline):

@@ -27,7 +27,7 @@ ROBOTSTXT_OBEY = False
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 2
+DOWNLOAD_DELAY = 0.1
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -55,6 +55,7 @@ DEFAULT_REQUEST_HEADERS = {
 DOWNLOADER_MIDDLEWARES = {
    # 'bcy.middlewares.MyCustomDownloaderMiddleware': 543,
     'bcy.middlewares.BcyDownMiddleware': 543,
+    'bcy.middlewares.ProxyMiddleware': 100
 }
 
 # Enable or disable extensions
@@ -66,7 +67,8 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'bcy.pipelines.BcyPipeline': 300,
+   # 'bcy.pipelines.BcyPipeline': 300,
+    'bcy.pipelines.InfoPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -95,3 +97,11 @@ SCHEDULER = "scrapy_redis.scheduler.Scheduler"
 DUPEFILTER_CLASS = "scrapy_redis.dupefilter.RFPDupeFilter"
 SCHEDULER_PERSIST = True
 REDIS_URL = 'redis://user:@127.0.0.1:6379'
+
+
+#Mysql数据库的配置信息
+MYSQL_HOST = '127.0.0.1'
+MYSQL_DBNAME = 'bcy'         #数据库名字
+MYSQL_USER = 'root'             #数据库账号
+MYSQL_PASSWD = '123456'         #数据库密码
+MYSQL_PORT = 3306               #数据库端口

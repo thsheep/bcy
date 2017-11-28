@@ -76,7 +76,7 @@ def post(cp_id, rp_id):
         "rp_id": rp_id
     }
     response = session.post(post_url, data=post_data, headers=headers, cookies=cookies)
-    if response.json().get('status') == 1:
+    if json.loads(response.text).get('status') == 1:
         print('评论发布成功')
 
     pass
